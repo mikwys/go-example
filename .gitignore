@@ -13,3 +13,12 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# built bin files
+bin/*
+
+# dev specific
+*.code-workspace
+*.swp
+*.swo
+.idea
