@@ -12,7 +12,14 @@
             <label for="userNameInput" class="form-label">Twitter user name</label>
             <input type="text" class="form-control" id="userNameInput" value="golangweekly" name="user">
         </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="load" class="btn btn-primary">Load HTML template</button>
+    </form>
+    <form action="/timeline-json" method="get">
+        <div class="mb-3">
+            <label for="userNameInputJSON" class="form-label">Twitter user name</label>
+            <input type="text" class="form-control" id="userNameInputJSON" value="golangweekly" name="user">
+        </div>
+        <button type="load" class="btn btn-primary">Load JSON</button>
     </form>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>

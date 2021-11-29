@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,7 +9,6 @@ import (
 	"text/template"
 
 	"github.com/mikwys/go-example/internal"
-	"go.m3o.com/twitter"
 )
 
 func main() {
@@ -20,10 +20,11 @@ func main() {
 	}
 
 	// setup dependencies
-	twitterService := twitter.NewTwitterService(config.Token())
+	twitterClient := internal.NewM3OTwitterClient(config.Token())
 
 	http.HandleFunc("/", NewIndexHandler(indexTpl))
-	http.HandleFunc("/timeline", NewTweetListHandler(timelineTpl, twitterService))
+	http.HandleFunc("/timeline", NewTweetListHandler(timelineTpl, twitterClient))
+	http.HandleFunc("/timeline-json", NewTweetListHandlerJSON(twitterClient))
 
 	log.Println(fmt.Sprintf("HTTP Listener at: %s", config.Port()))
 	if err = http.ListenAndServe(fmt.Sprintf(":%s", config.Port()), nil); err != http.ErrServerClosed {
@@ -43,7 +44,7 @@ func NewIndexHandler(tpl *template.Template) func(w http.ResponseWriter, req *ht
 	}
 }
 
-func NewTweetListHandler(tpl *template.Template, twSvc *twitter.TwitterService) func(w http.ResponseWriter, req *http.Request) {
+func NewTweetListHandler(tpl *template.Template, twSvc internal.TwitterClient) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		userName := req.URL.Query().Get("user")
 		log.Println("user param", userName)
@@ -51,34 +52,37 @@ func NewTweetListHandler(tpl *template.Template, twSvc *twitter.TwitterService) 
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-
-		// load user details
-		userDetails, err := twSvc.User(&twitter.UserRequest{
-			Username: userName,
-		})
+		user, err := twSvc.Load(userName)
 		if err != nil {
-			log.Println(fmt.Sprintf("could not load user %s details. err= %v", userName, err))
+			log.Println(fmt.Sprintf("could not load user %s details/tweets. err= %v", userName, err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		// load recent tweets
-		timeline, err := twSvc.Timeline(&twitter.TimelineRequest{
-			Username: userName,
-		})
-		if err != nil {
-			log.Println(fmt.Sprintf("could not load user %s tweets. err= %v", userName, err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
 		err = tpl.Execute(w, internal.UserTimelineModel{
-			Details:  *userDetails,
-			Timeline: *timeline,
+			Details:  user.Details,
+			Timeline: user.Timeline,
 		})
 		if err != nil {
-			log.Println(fmt.Sprintf("could execute template (user %s) err= %v", userName, err))
+			log.Println(fmt.Sprintf("could not execute template (user %s) err= %v", userName, err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+	}
+}
+func NewTweetListHandlerJSON(twSvc internal.TwitterClient) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		userName := req.URL.Query().Get("user")
+		log.Println("user param", userName)
+		if strings.TrimSpace(userName) == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		user, err := twSvc.Load(userName)
+		if err != nil {
+			log.Println(fmt.Sprintf("could not load user %s details/tweets. err= %v", userName, err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(user)
 	}
 }
