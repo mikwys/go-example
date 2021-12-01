@@ -14,6 +14,13 @@ type TwitterClient interface {
 	Load(userName string) (*UserTimeline, error)
 }
 
+type mockTC struct {
+}
+
+func (m *mockTC) Load(userName string) (*UserTimeline, error) {
+	panic("implement me")
+}
+
 ///////
 
 func NewM3OTwitterClient(apiToken string) TwitterClient {

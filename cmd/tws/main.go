@@ -21,7 +21,7 @@ func main() {
 
 	// setup dependencies
 	twitterClient := internal.NewM3OTwitterClient(config.Token())
-
+	log.Println("hey!")
 	http.HandleFunc("/", NewIndexHandler(indexTpl))
 	http.HandleFunc("/timeline", NewTweetListHandler(timelineTpl, twitterClient))
 	http.HandleFunc("/timeline-json", NewTweetListHandlerJSON(twitterClient))
